@@ -2,6 +2,7 @@
 
 #include "TankAimingComponent.h"
 #include "../Public/TankBarrel.h"
+#include "../Public/Turret.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 
 // Sets default values for this component's properties
@@ -9,7 +10,7 @@ UTankAimingComponent::UTankAimingComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -46,27 +47,38 @@ void UTankAimingComponent::AimAt(FVector HitLocation, float LauchSpeed) {
 		StartLocation,
 		HitLocation,
 		LauchSpeed,
-		ESuggestProjVelocityTraceOption::DoNotTrace
+		false,
+        0,
+        0,
+        ESuggestProjVelocityTraceOption::DoNotTrace
 	);
+    
+    auto time = GetWorld()->GetTimeSeconds();
+    
 	if (result) {
 		auto AimDirection = OutLaunchVelocity.GetSafeNormal();
-		UE_LOG(LogTemp, Warning, TEXT("Tank %s is aiming at %s"), *(GetOwner()->GetName()), *HitLocation.ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("%f: Aim Find"), time);
 
-		MoveBarrel(AimDirection);
-	}
+        MoveBarrelAndTurret(AimDirection);
+    } else {
+        //UE_LOG(LogTemp, Warning, TEXT("%f: No Aim Find"), time);
+    }
 }
 
 void UTankAimingComponent::SetBarrelReference(UTankBarrel* BarrelToSet) {
 	Barrel = BarrelToSet;
-	auto BarrelLocation = Barrel->GetComponentLocation();
-	UE_LOG(LogTemp, Warning, TEXT("Barrel Location: %s"), *(BarrelLocation.ToString()));
-
 }
 
-void UTankAimingComponent::MoveBarrel(FVector AimDirection) {
+void UTankAimingComponent::SetTurretReference(UTurret* TurretToSet) {
+    Turret = TurretToSet;
+}
+
+void UTankAimingComponent::MoveBarrelAndTurret(FVector AimDirection) {
 	FRotator BarrelRotation = Barrel->GetForwardVector().Rotation();
 	FRotator AimRotation = AimDirection.Rotation();
 	auto DeltaRotator = AimRotation - BarrelRotation;
 
-	Barrel->Elevate(5);
+	Barrel->Elevate(DeltaRotator.Pitch);
+    Turret->Rotate(DeltaRotator.Yaw);
+    
 }

@@ -8,7 +8,9 @@
 #include "Tank.generated.h"
 
 class UTankBarrel;
+class AProjectile;
 class UTurret;
+class UTankMovementComponent;
 
 UCLASS()
 class BATTLETANK_API ATank : public APawn
@@ -31,7 +33,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UTankAimingComponent* TankAimingComponent = nullptr;
+	UPROPERTY(BlueprintReadOnly)
+		UTankAimingComponent* TankAimingComponent = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+		UTankMovementComponent* TankMovementComponent = nullptr;
 
 public:
 
@@ -42,6 +48,16 @@ public:
         void Fire();
 
 private:
-	UPROPERTY(EditAnywhere, Category = Firing)
+	UPROPERTY(EditDefaultsOnly, Category = Firing)
 		float LaunchSpeed = 1000;
+
+	UPROPERTY(EditAnywhere, Category = Setup)
+		float ReloadTime = 3;
+
+	UPROPERTY(EditAnywhere, Category = Setup)
+		TSubclassOf<AProjectile> ProjectileBlueprint;
+
+	UTankBarrel* LocalBarrel = nullptr;
+	double LastReloadTime = 0;
+
 };
